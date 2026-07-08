@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventario Simplificado</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; }
+        form { background: #f4f4f4; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+        input { display: block; width: 95%; margin-bottom: 10px; padding: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background: #ddd; }
+        .paginacion { margin-top: 10px; text-align: center; }
+        button { cursor: pointer; margin-right: 5px; padding: 4px 8px; }
+    </style>
+</head>
+<body>
+
+    <h2>Inventario: Consultar y Modificar</h2>
+    
+    <form id="formProd">
+        <input type="hidden" id="idProd">
+        <label>Producto:</label>
+        <input type="text" id="nombreProd" required>
+        <label>Precio:</label>
+        <input type="number" id="precioProd" step="0.01" required>
+        <button type="submit" id="btnGuardar">Guardar</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Precio</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="cuerpoTabla"></tbody>
+    </table>
+
+    <div class="paginacion" id="paginas"></div>
+
+<script>
+    // Datos simulados
+    let productos = [
+        { id: 1, name: "Laptop", price: 750 },
+        { id: 2, name: "Mouse", price: 15 },
+        { id: 3, name: "Teclado", price: 45 },
+        { id: 4, name: "Monitor", price: 180 }
+    ];
+
+    let paginaActual = 1;
+    const filasPorPagina = 2; // Paginación corta para notar el cambio fácil
+
+    const cuerpoTabla = document.getElementById('cuerpoTabla');
+    const paginas = document.getElementById('paginas');
+    const formProd = document.getElementById('formProd');
+    const idProd = document.getElementById('idProd');
+    const nombreProd = document.getElementById('nombreProd');
+    const precioProd = document.getElementById('precioProd');
+    const btnGuardar = document.getElementById('btnGuardar');
+
+    function mostrarTabla() {
+        cuerpoTabla.innerHTML = "";
+        let inicio = (paginaActual - 1) * filasPorPagina;
+        let fin = inicio + filasPorPagina;
+        let listaPaginada = productos.slice(inicio, fin);
+
+        listaPaginada.forEach(p => {
+            cuerpoTabla.innerHTML += `<tr>
+                <td>${p.id}</td>
+                <td>${p.name}</td>
+                <td>$${p.price}</td>
+                <td>
+    <button onclick="cargarEditar(${p.id})">Editar</button>
+    <button onclick="eliminar(${p.id})">Eliminar</button>
+</td>
+            </tr>`;
+        });
+        mostrarBotonesPag();
+    }
+
+    function mostrarBotonesPag() {
+        paginas.innerHTML = "";
+        let totalPaginas = Math.ceil(productos.length / filasPorPagina);
+        for (let i = 1; i <= totalPaginas; i++) {
+            paginas.innerHTML += `<button ${i===paginaActual?'disabled':''} onclick="cambiarPag(${i})">${i}</button>`;
+        }
+    }
+
+    window.cambiarPag = (num) => { paginaActual = num; mostrarTabla(); };
+
+    formProd.addEventListener('submit', (e) => {
+        e.preventDefault();
+        let id = idProd.value;
+        if (id) {
+            let p = productos.find(prod => prod.id == id);
+            p.name = nombreProd.value;
+            p.price = parseFloat(precioProd.value);
+        } else {
+            let nuevoId = productos.length > 0 ? Math.max(...productos.map(p=>p.id)) + 1 : 1;
+            productos.push({ id: nuevoId, name: nombreProd.value, price: parseFloat(precioProd.value) });
+        }
+        formProd.reset();
+        idProd.value = "";
+        btnGuardar.innerText = "Guardar";
+        mostrarTabla();
+    });
+
+    window.cargarEditar = (id) => {
+        let p = productos.find(prod => prod.id == id);
+        idProd.value = p.id;
+        nombreProd.value = p.name;
+        precioProd.value = p.price;
+        btnGuardar.innerText = "Actualizar";
+    };
+
+    window.eliminar = (id) => {
+        productos = productos.filter(p => p.id !== id);
+        let totalPaginas = Math.ceil(productos.length / filasPorPagina);
+        if (paginaActual > totalPaginas && paginaActual > 1) paginaActual = totalPaginas;
+        mostrarTabla();
+    };
+
+    mostrarTabla();
+</script>
+</body>
+</html>
